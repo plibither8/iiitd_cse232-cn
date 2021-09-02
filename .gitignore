@@ -1,0 +1,14 @@
+*
+!*/
+!*.*
+
+*.zip
+*.o
+*.out
+*.bin
+*.i
+!Makefile
+tests/*
+.p8sh_history
+
+!LICENSE
