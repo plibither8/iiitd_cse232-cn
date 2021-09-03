@@ -8,5 +8,5 @@ OBJ = server.o client.o
 all: $(OBJ)
 
 clean:
-	rm -f $(OBJ)
+	rm -f $(OBJ) *.txt
 

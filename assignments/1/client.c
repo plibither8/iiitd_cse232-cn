@@ -1,5 +1,3 @@
-// TCP Client that sends server an integer
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

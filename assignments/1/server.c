@@ -87,27 +87,24 @@ void *handle_client(void *socket_fd) {
   char processes[num_processes][BUFFER_SIZE];
 
   while ((proc_entry = readdir(proc_directory)) != NULL) {
-    // Skip the . and .. directories and any non-process directories
-    if (
-      strcmp(proc_entry->d_name, ".") == 0 ||
-      strcmp(proc_entry->d_name, "..") == 0 ||
-      !isdigit(proc_entry->d_name[0])
-    ) {
-      num_processes--;
-      continue;
-    }
-
     // Open the /proc/<pid>/stat file
     char stat_file_path[BUFFER_SIZE];
     sprintf(stat_file_path, "/proc/%s/stat", proc_entry->d_name);
     int stat_file_fd = open(stat_file_path, O_RDONLY);
 
-    // Silently skip the entry if it cannot be opened
-    // This means the entry is either not a directory or not a process
-    if (stat_file_fd < 0) {
+    if (
+      // Skip the . and .. directories and any non-process directories
+      strcmp(proc_entry->d_name, ".") == 0 ||
+      strcmp(proc_entry->d_name, "..") == 0 ||
+      // Skip any directories that are not numeric
+      !isdigit(proc_entry->d_name[0]) ||
+      // This means the entry is either not a directory or not a process
+      stat_file_fd < 0
+    ) {
+      if (stat_file_fd > 0) close(stat_file_fd);
       num_processes--;
       continue;
-    }
+    };
 
     // Read the /proc/<pid>/stat file
     char stat_file_buffer[BUFFER_SIZE];
@@ -162,6 +159,7 @@ void *handle_client(void *socket_fd) {
   write(socket_fd_int, file_size_buffer, BUFFER_SIZE);
   int top_processes_file_fd = open(top_processes_file_path, O_RDONLY);
   sendfile(socket_fd_int, top_processes_file_fd, NULL, file_size);
+  close(top_processes_file_fd);
 
   // Get top process from client
   printf("Receiving top process from client...\n");
