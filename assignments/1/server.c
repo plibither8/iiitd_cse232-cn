@@ -173,7 +173,7 @@ void *handle_client(void *socket_fd) {
   char *top_process_name = strtok_r(NULL, DELIMITER, &save_ptr);
 
   // Print the top process
-  printf("\nTop process: \nProcess name: %s\nPID: %d\nCPU Time: %d\n\n\n", top_process_name, top_pid, top_cputime);
+  printf("\nTop process: \nProcess name: %sPID: %d\nCPU Time: %d\n\n\n", top_process_name, top_pid, top_cputime);
 
   close(socket_fd_int);
   return;

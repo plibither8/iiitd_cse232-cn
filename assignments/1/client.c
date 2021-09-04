@@ -7,10 +7,12 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <dirent.h>
 
 #define PORT 5000
 #define HOSTNAME "127.0.0.1"
 #define BUFFER_SIZE 1024
+#define DELIMITER " "
 
 int main(int argc, char *argv[]) {
   int client_socket_fd;
@@ -63,10 +65,59 @@ int main(int argc, char *argv[]) {
   fprintf(top_processes_file, "%s", file_buffer);
   fclose(top_processes_file);
 
-  // Send highest line to server
-  printf("Sending top process to client...\n");
-  char *highest_line = strtok(file_buffer, "\n");
-  write(client_socket_fd, highest_line, strlen(highest_line));
+  // Get process with max cpu usage
+  int max_cputime = 0;
+  char max_cputime_line[BUFFER_SIZE];
+
+  DIR *proc_directory;
+  struct dirent *proc_entry;
+  proc_directory = opendir("/proc");
+  while ((proc_entry = readdir(proc_directory)) != NULL) {
+    // Open the /proc/<pid>/stat file
+    char stat_file_path[BUFFER_SIZE];
+    sprintf(stat_file_path, "/proc/%s/stat", proc_entry->d_name);
+    int stat_file_fd = open(stat_file_path, O_RDONLY);
+
+    if (
+      // Skip the . and .. directories and any non-process directories
+      strcmp(proc_entry->d_name, ".") == 0 ||
+      strcmp(proc_entry->d_name, "..") == 0 ||
+      // Skip any directories that are not numeric
+      !isdigit(proc_entry->d_name[0]) ||
+      // This means the entry is either not a directory or not a process
+      stat_file_fd < 0
+    ) {
+      if (stat_file_fd > 0) close(stat_file_fd);
+      continue;
+    };
+
+    // Read the /proc/<pid>/stat file
+    char stat_file_buffer[BUFFER_SIZE];
+    if (read(stat_file_fd, stat_file_buffer, sizeof(stat_file_buffer)) < 0) {
+      perror("read");
+      exit(1);
+    }
+    close(stat_file_fd);
+
+    // Get the pid, process name, cputime
+    char *save_ptr;
+    int pid = atoi(strtok_r(stat_file_buffer, DELIMITER, &save_ptr));
+    char *process_name = strtok_r(NULL, DELIMITER, &save_ptr);
+    for (int i = 0; i < 11; i++) strtok_r(NULL, DELIMITER, &save_ptr);
+    int utime = atoi(strtok_r(NULL, DELIMITER, &save_ptr));
+    int stime = atoi(strtok_r(NULL, DELIMITER, &save_ptr));
+    int cputime = utime + stime;
+
+    // If this process has the highest cputime, save it
+    if (cputime > max_cputime) {
+      max_cputime = cputime;
+      sprintf(max_cputime_line, "%d %d %s\n", cputime, pid, process_name);
+    }
+  }
+
+  // Send the max cputime line to the server
+  printf("Sending max cputime line to server...\n");
+  write(client_socket_fd, max_cputime_line, BUFFER_SIZE);
 
   sleep(10);
   printf("Closing connection...\n");
