@@ -12,3 +12,4 @@ tests/*
 .p8sh_history
 
 !LICENSE
+ns-*
