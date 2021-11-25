@@ -123,11 +123,10 @@ public:
     mytbl.tbl.push_back(entry);
   }
 
-  void updateTblEntry(string myip, string next_hop, int cost) {
+  void updateTblEntry(string myip, int cost) {
     for (auto &entry : mytbl.tbl) {
       if (entry.dstip == myip) {
         entry.cost = cost;
-        entry.nexthop = next_hop;
         for (int i = 0; i < interfaces.size(); i++) {
           if (interfaces[i].first.getConnectedIp() == myip) {
             interfaces.erase(interfaces.begin() + i);

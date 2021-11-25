@@ -37,10 +37,10 @@ void routingAlgo(vector<RoutingNode *> nd) {
 
   for (auto &node : nd) {
     if (node->getName() == "B") {
-      node->updateTblEntry("10.0.1.3", "-", 16);
+      node->updateTblEntry("10.0.1.3", 16);
     } else if (node->getName() == "C") {
-      node->updateTblEntry("10.0.0.21", "-", 16);
-      node->updateTblEntry("10.0.1.23", "-", 16);
+      node->updateTblEntry("10.0.0.21", 16);
+      node->updateTblEntry("10.0.1.23", 16);
     }
   }
 
